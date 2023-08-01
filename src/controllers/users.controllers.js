@@ -43,7 +43,7 @@ export async function signin(req, res) {
   
         await db.query(`INSERT INTO sessions ("userId", token) VALUES ($1, $2)`, [userExist.rows[0].id, token])  
         
-        res.status(200).send({ message: "Login efetuado com sucesso" })
+        res.status(200).send({ token: token })
       
       } else {
         res.status(401).send({ message: "Senha incorreta!" });
@@ -58,6 +58,5 @@ export async function getUserMe(req, res) {
 }
 
 export async function getRanking(req, res) {
-  const teste = await db.query(`SELECT * FROM users`)
-  res.send(teste.rows)
+  //
 }
