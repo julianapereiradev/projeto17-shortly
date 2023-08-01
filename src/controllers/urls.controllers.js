@@ -68,5 +68,35 @@ export async function redirectUrl(req, res) {
 
 
 export async function deleteUrlById(req, res) {
-    //
+  const { authorization } = req.headers;
+
+  const { id } = req.params; 
+  
+  const token = authorization?.replace("Bearer ", "");
+  if (!token) return res.status(401).send("Para acessar precisa de um token");
+
+  try {
+    const session = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token]);
+    if (session.rowCount === 0) {
+      return res.status(401).send("Não foi encontrado o token no banco");
+    }
+    
+    const idUrlQuery = await db.query(`SELECT * FROM urls WHERE id=$1`, [id]);
+    if (idUrlQuery.rows.length === 0) {
+      return res.status(404).send("Este id não existe no banco de urls");
+    }
+    
+    const userIdFromToken = session.rows[0].userId;
+    const userIdFromUrl = idUrlQuery.rows[0].userId;
+    
+    if (userIdFromToken !== userIdFromUrl) {
+      return res.status(401).send("Você não tem permissão para excluir esta URL.");
+    }
+    
+    await db.query(`DELETE FROM urls WHERE id=$1`, [id]);
+    res.sendStatus(204);
+
+  } catch (err) {
+    return res.status(500).send(err.message);
   }
+}
