@@ -50,8 +50,22 @@ export async function getUrlById(req, res) {
 }
 
 export async function redirectUrl(req, res) {
-    //
+  const { shortUrl } = req.params;
+
+  const shortUrlQuery = await db.query(`SELECT urls.id, urls."shortUrl", urls.url, urls."visitCount" FROM urls WHERE "shortUrl"=$1`, [shortUrl]);
+
+  if (shortUrlQuery.rows.length === 0) {
+    return res.status(404).send("Esta url encurtada não existe no banco de urls");
+  }
+
+  const currentVisitCount = shortUrlQuery.rows[0].visitCount;
+  const newVisitCount = currentVisitCount + 1;
+
+  await db.query(`UPDATE urls SET "visitCount"=$1 WHERE "shortUrl"=$2`, [newVisitCount, shortUrl]);
+
+  res.redirect(shortUrlQuery.rows[0].url);
 }
+
 
 export async function deleteUrlById(req, res) {
     //
