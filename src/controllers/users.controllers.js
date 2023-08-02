@@ -2,6 +2,16 @@ import {db} from "../database/database.connection.js"
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
+function mapRentalData(user_me) {
+  return {
+    id: user_me.id,
+    shortUrl: user_me.shortUrl,
+    url: user_me.url,
+    visitCount: user_me.visitCount,
+  };
+}
+
+
 export async function signup(req, res) {
   const { name, email, password } = req.body;
   
@@ -54,7 +64,52 @@ export async function signin(req, res) {
 }
 
 export async function getUserMe(req, res) {
-  //
+  const { authorization } = req.headers;
+  
+  const token = authorization?.replace("Bearer ", "");
+  if (!token) return res.status(401).send("Para acessar precisa de um token");
+
+  try {
+    const session = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token]);
+    if (session.rowCount === 0) {
+      return res.status(401).send("Não foi encontrado o token no banco");
+    }
+    
+    const result = await db.query(`
+    SELECT urls."userId", 
+      users.name AS "name", 
+      urls."id", 
+      urls."shortUrl", 
+      urls."url",
+      urls."visitCount"
+    FROM urls
+    JOIN users ON users.id = urls."userId"
+    JOIN sessions ON sessions."userId" = urls."userId"
+    WHERE token=$1
+    GROUP BY urls."userId", 
+      users.name, 
+      urls."id", 
+      urls."shortUrl", 
+      urls."url"
+    ORDER BY urls."id" ASC;`, [token])
+
+    const total = await db.query(`
+    SELECT SUM(urls."visitCount") as "totalVisitCount" 
+    FROM urls
+    JOIN sessions ON sessions."userId" = urls."userId"
+    WHERE token=$1;`, [token]);
+    const totalVisitCount = parseInt(total.rows[0].totalVisitCount, 10);
+
+    res.status(200).send({
+      id: result.rows[0].userId,
+      name: result.rows[0].name,
+      visitCount: totalVisitCount,
+      shortenedUrls: result.rows.map(mapRentalData)
+    })
+
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
 }
 
 export async function getRanking(req, res) {
