@@ -24,22 +24,21 @@ function mapRanking(ranking) {
   };
 }
 
-//To findUserByEmail
-export async function findUserByEmail(email) {
-  const result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
-  return result.rows[0];
-}
-
-
 //Functions:
 
 export async function signup(req, res) {
   const { name, email, password } = req.body;
 
   try {
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
-      return res.status(409).send({ message: "Este email já existe no banco" });
+    const newEmailExistsInSignUpEmails = await db.query(
+      `SELECT * FROM users WHERE email=$1`,
+      [email]
+    );
+
+    if (newEmailExistsInSignUpEmails.rowCount > 0) {
+      return res
+        .status(409)
+        .send({ messsage: "Este email já existe no banco" });
     }
 
     const encryptedPassword = bcrypt.hashSync(password, 10);
@@ -59,9 +58,14 @@ export async function signin(req, res) {
   const { email, password } = req.body;
 
   try {
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(401).send({ message: "Este email não existe, crie uma conta" });
+       const userExist = await db.query(`SELECT * FROM users WHERE email=$1`, [
+      email,
+    ]);
+
+    if (userExist.rowCount === 0) {
+      return res
+        .status(401)
+        .send({ message: "Este email não existe, crie uma conta" });
     }
 
     const hashedPassword = userExist.rows[0].password;
