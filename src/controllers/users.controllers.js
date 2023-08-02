@@ -10,7 +10,7 @@ function mapGetUserMe(user_me) {
     id: user_me.id,
     shortUrl: user_me.shortUrl,
     url: user_me.url,
-    visitCount: user_me.visitCount,
+    visitCount: parseInt(user_me.totalVisitCount, 10) || 0,
   };
 }
 
@@ -37,11 +37,6 @@ export async function signup(req, res) {
     }
 
     const encryptedPassword = bcrypt.hashSync(password, 10);
-
-    // await db.query(
-    //   `INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`,
-    //   [name, email, encryptedPassword]
-    // );
 
     signupDB(name, email, encryptedPassword)
 
@@ -79,6 +74,48 @@ export async function signin(req, res) {
   }
 }
 
+// export async function getUserMe(req, res) {
+
+//   const token = res.locals.rows[0].token;
+
+//   try {
+
+//     const result = await db.query(`
+//     SELECT urls."userId", 
+//       users.name AS "name", 
+//       urls."id", 
+//       urls."shortUrl", 
+//       urls."url",
+//       urls."visitCount"
+//     FROM urls
+//     JOIN users ON users.id = urls."userId"
+//     JOIN sessions ON sessions."userId" = urls."userId"
+//     WHERE token=$1
+//     ORDER BY urls."id" ASC;`,
+//       [token]
+//     );
+
+//     const total = await db.query(
+//     `
+//     SELECT SUM(urls."visitCount") as "totalVisitCount" 
+//     FROM urls
+//     JOIN sessions ON sessions."userId" = urls."userId"
+//     WHERE token=$1;`,
+//       [token]
+//     );
+//     const totalVisitCount = parseInt(total.rows[0].totalVisitCount, 10);
+
+//     res.status(200).send({
+//       id: result.rows[0].userId,
+//       name: result.rows[0].name,
+//       visitCount: totalVisitCount,
+//       shortenedUrls: result.rows.map(mapGetUserMe),
+//     });
+//   } catch (err) {
+//     return res.status(500).send(err.message);
+//   }
+// }
+
 export async function getUserMe(req, res) {
 
   const token = res.locals.rows[0].token;
@@ -86,45 +123,38 @@ export async function getUserMe(req, res) {
   try {
 
     const result = await db.query(`
-    SELECT urls."userId", 
-      users.name AS "name", 
-      urls."id", 
-      urls."shortUrl", 
-      urls."url",
-      urls."visitCount"
-    FROM urls
-    JOIN users ON users.id = urls."userId"
-    JOIN sessions ON sessions."userId" = urls."userId"
-    WHERE token=$1
-    GROUP BY urls."userId", 
-      users.name, 
-      urls."id", 
-      urls."shortUrl", 
-      urls."url"
-    ORDER BY urls."id" ASC;`,
-      [token]
-    );
+      SELECT urls."userId", 
+        users.name AS "name", 
+        urls."id", 
+        urls."shortUrl", 
+        urls."url",
+        SUM(urls."visitCount") as "totalVisitCount"
+      FROM urls
+      JOIN users ON users.id = urls."userId"
+      JOIN sessions ON sessions."userId" = urls."userId"
+      WHERE token=$1
+      GROUP BY urls."userId", users.name, urls."id", urls."shortUrl", urls."url"
+      ORDER BY urls."id" ASC;
+    `, [token]);
 
-    const total = await db.query(
-      `
-    SELECT SUM(urls."visitCount") as "totalVisitCount" 
-    FROM urls
-    JOIN sessions ON sessions."userId" = urls."userId"
-    WHERE token=$1;`,
-      [token]
-    );
-    const totalVisitCount = parseInt(total.rows[0].totalVisitCount, 10);
+    let totalSum = 0;
+      for (let i = 0; i < result.rows.length; i++) {
+        const totalVisits = parseInt(result.rows[i].totalVisitCount, 10) || 0;
+        totalSum += totalVisits;
+      }
 
     res.status(200).send({
       id: result.rows[0].userId,
       name: result.rows[0].name,
-      visitCount: totalVisitCount,
+      visitCount:  totalSum,
       shortenedUrls: result.rows.map(mapGetUserMe),
     });
+
   } catch (err) {
     return res.status(500).send(err.message);
   }
 }
+
 
 export async function getRanking(req, res) {
   const rankings = await getRankingDB()
