@@ -5,6 +5,14 @@ export async function findUserByEmailDB(email) {
 }
 
 
+export async function signupDB(name, email, encryptedPassword) {
+    return await db.query(
+      `INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`,
+      [name, email, encryptedPassword]
+    );
+}
+
+
 export async function getRankingDB() {
     return db.query(`SELECT 
       users.id AS "id",

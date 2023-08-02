@@ -1,7 +1,7 @@
 import { db } from "../database/database.connection.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import { findUserByEmailDB, getRankingDB } from "../repositories/users.repositories.js";
+import { findUserByEmailDB, getRankingDB, signupDB } from "../repositories/users.repositories.js";
 
 
 //To render ROUTE /users/me
@@ -24,13 +24,6 @@ function mapRanking(ranking) {
   };
 }
 
-//To findUserByEmail
-// export async function findUserByEmail(email) {
-//   const result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
-//   return result;
-// }
-
-
 //Functions:
 
 export async function signup(req, res) {
@@ -45,10 +38,12 @@ export async function signup(req, res) {
 
     const encryptedPassword = bcrypt.hashSync(password, 10);
 
-    await db.query(
-      `INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`,
-      [name, email, encryptedPassword]
-    );
+    // await db.query(
+    //   `INSERT INTO users (name, email, password) VALUES ($1, $2, $3);`,
+    //   [name, email, encryptedPassword]
+    // );
+
+    signupDB(name, email, encryptedPassword)
 
     res.status(201).send({ message: "Usuário Cadastrado" });
   } catch (err) {
