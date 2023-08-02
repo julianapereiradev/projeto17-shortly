@@ -1,5 +1,10 @@
 import {db} from "../database/database.connection.js"
 
+export async function findUserByEmailDB(email) {
+  return db.query(`SELECT * FROM users WHERE email=$1`, [email]);
+}
+
+
 export async function getRankingDB() {
     return db.query(`SELECT 
       users.id AS "id",
