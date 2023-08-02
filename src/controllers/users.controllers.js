@@ -82,18 +82,10 @@ export async function signin(req, res) {
 }
 
 export async function getUserMe(req, res) {
-  const { authorization } = req.headers;
 
-  const token = authorization?.replace("Bearer ", "");
-  if (!token) return res.status(401).send("Para acessar precisa de um token");
+  const token = res.locals.rows[0].token;
 
   try {
-    const session = await db.query(`SELECT * FROM sessions WHERE token=$1`, [
-      token,
-    ]);
-    if (session.rowCount === 0) {
-      return res.status(401).send("Não foi encontrado o token no banco");
-    }
 
     const result = await db.query(
       `

@@ -2,20 +2,12 @@ import { nanoid } from "nanoid";
 import {db} from "../database/database.connection.js"
 
 export async function postUrl(req, res) {
-  const { authorization } = req.headers;
 
   const { url } = req.body; 
-  
-  const token = authorization?.replace("Bearer ", "");
-  if (!token) return res.status(401).send("Para acessar precisa de um token");
+  const session = res.locals;
 
   try {
 
-    const session = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token])
-    if (session.rowCount === 0) {
-      return res.status(401).send("Não foi encontrado o token no banco");
-    }
-    
     const shortUrlResponse = nanoid()
     
     await db.query(`INSERT INTO urls ("userId", url, "shortUrl") VALUES ($1, $2, $3);`, [session.rows[0].userId, url, shortUrlResponse])
@@ -68,18 +60,11 @@ export async function redirectUrl(req, res) {
 
 
 export async function deleteUrlById(req, res) {
-  const { authorization } = req.headers;
 
   const { id } = req.params; 
-  
-  const token = authorization?.replace("Bearer ", "");
-  if (!token) return res.status(401).send("Para acessar precisa de um token");
+  const session = res.locals;
 
   try {
-    const session = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token]);
-    if (session.rowCount === 0) {
-      return res.status(401).send("Não foi encontrado o token no banco");
-    }
     
     const idUrlQuery = await db.query(`SELECT * FROM urls WHERE id=$1`, [id]);
     if (idUrlQuery.rows.length === 0) {
