@@ -1,6 +1,7 @@
 import { db } from "../database/database.connection.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
+import { getRankingDB } from "../repositories/users.repositories.js";
 
 
 //To render ROUTE /users/me
@@ -130,21 +131,7 @@ export async function getUserMe(req, res) {
 }
 
 export async function getRanking(req, res) {
-  const rankings = await db.query(`SELECT 
-    users.id AS "id",
-    users.name AS "name",
-    COUNT(urls.id) AS "linksCount",
-    COALESCE(SUM(urls."visitCount"), 0) AS "visitCount"
-    FROM 
-      users
-    LEFT JOIN urls ON users.id = urls."userId"
-    GROUP BY 
-      users.id,
-      users.name
-    ORDER BY
-    COALESCE(SUM(urls."visitCount"), 0) DESC
-    LIMIT 10;
-`);
+  const rankings = await getRankingDB()
 
   const formattedRanking = rankings.rows.map(mapRanking);
   res.status(200).send(formattedRanking);
