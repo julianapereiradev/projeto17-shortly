@@ -12,6 +12,24 @@ export async function signupDB(name, email, encryptedPassword) {
     );
 }
 
+export async function getUserMeDB(token) {
+
+   return await db.query(`
+      SELECT urls."userId", 
+        users.name AS "name", 
+        urls."id", 
+        urls."shortUrl", 
+        urls."url",
+        SUM(urls."visitCount") as "totalVisitCount"
+      FROM urls
+      JOIN users ON users.id = urls."userId"
+      JOIN sessions ON sessions."userId" = urls."userId"
+      WHERE token=$1
+      GROUP BY urls."userId", users.name, urls."id", urls."shortUrl", urls."url"
+      ORDER BY urls."id" ASC;
+    `, [token]);
+}
+
 
 export async function getRankingDB() {
     return db.query(`SELECT 

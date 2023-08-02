@@ -1,7 +1,7 @@
 import { db } from "../database/database.connection.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import { findUserByEmailDB, getRankingDB, signupDB } from "../repositories/users.repositories.js";
+import { findUserByEmailDB, getRankingDB, getUserMeDB, signupDB } from "../repositories/users.repositories.js";
 
 
 //To render ROUTE /users/me
@@ -74,68 +74,13 @@ export async function signin(req, res) {
   }
 }
 
-// export async function getUserMe(req, res) {
-
-//   const token = res.locals.rows[0].token;
-
-//   try {
-
-//     const result = await db.query(`
-//     SELECT urls."userId", 
-//       users.name AS "name", 
-//       urls."id", 
-//       urls."shortUrl", 
-//       urls."url",
-//       urls."visitCount"
-//     FROM urls
-//     JOIN users ON users.id = urls."userId"
-//     JOIN sessions ON sessions."userId" = urls."userId"
-//     WHERE token=$1
-//     ORDER BY urls."id" ASC;`,
-//       [token]
-//     );
-
-//     const total = await db.query(
-//     `
-//     SELECT SUM(urls."visitCount") as "totalVisitCount" 
-//     FROM urls
-//     JOIN sessions ON sessions."userId" = urls."userId"
-//     WHERE token=$1;`,
-//       [token]
-//     );
-//     const totalVisitCount = parseInt(total.rows[0].totalVisitCount, 10);
-
-//     res.status(200).send({
-//       id: result.rows[0].userId,
-//       name: result.rows[0].name,
-//       visitCount: totalVisitCount,
-//       shortenedUrls: result.rows.map(mapGetUserMe),
-//     });
-//   } catch (err) {
-//     return res.status(500).send(err.message);
-//   }
-// }
-
 export async function getUserMe(req, res) {
 
   const token = res.locals.rows[0].token;
 
   try {
 
-    const result = await db.query(`
-      SELECT urls."userId", 
-        users.name AS "name", 
-        urls."id", 
-        urls."shortUrl", 
-        urls."url",
-        SUM(urls."visitCount") as "totalVisitCount"
-      FROM urls
-      JOIN users ON users.id = urls."userId"
-      JOIN sessions ON sessions."userId" = urls."userId"
-      WHERE token=$1
-      GROUP BY urls."userId", users.name, urls."id", urls."shortUrl", urls."url"
-      ORDER BY urls."id" ASC;
-    `, [token]);
+    const result = await getUserMeDB(token)
 
     let totalSum = 0;
       for (let i = 0; i < result.rows.length; i++) {
@@ -154,7 +99,6 @@ export async function getUserMe(req, res) {
     return res.status(500).send(err.message);
   }
 }
-
 
 export async function getRanking(req, res) {
   const rankings = await getRankingDB()
