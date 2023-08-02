@@ -139,19 +139,19 @@ export async function getUserMe(req, res) {
 
 export async function getRanking(req, res) {
   const ranking = await db.query(`SELECT 
-  users.id AS "id",
-  users.name AS "nameee",
-  COUNT(urls.id) AS "linksCount",
-  COALESCE(SUM(urls."visitCount"), 0) AS "visitCount"
-FROM 
-  users
-LEFT JOIN urls ON users.id = urls."userId"
-GROUP BY 
-  users.id,
-  users.name
-ORDER BY
-  COALESCE(SUM(urls."visitCount"), 0) DESC
-LIMIT 10;
+    users.id AS "id",
+    users.name AS "name",
+    COUNT(urls.id) AS "linksCount",
+    COALESCE(SUM(urls."visitCount"), 0) AS "visitCount"
+    FROM 
+      users
+    LEFT JOIN urls ON users.id = urls."userId"
+    GROUP BY 
+      users.id,
+      users.name
+    ORDER BY
+    COALESCE(SUM(urls."visitCount"), 0) DESC
+    LIMIT 10;
 `);
 
   const formattedResults = formatResults(ranking.rows);
