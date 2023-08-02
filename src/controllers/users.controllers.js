@@ -2,7 +2,9 @@ import { db } from "../database/database.connection.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
-function mapRentalData(user_me) {
+
+//To render ROUTE /users/me
+function mapGetUserMe(user_me) {
   return {
     id: user_me.id,
     shortUrl: user_me.shortUrl,
@@ -11,28 +13,32 @@ function mapRentalData(user_me) {
   };
 }
 
-function formatResults(results) {
-  return results.map((row) => ({
-    id: row.id,
-    name: row.name,
-    linksCount: row.linksCount,
-    visitCount: row.visitCount,
-  }));
+//To render ROUTE /ranking
+function mapRanking(ranking) {
+  return {
+    id: ranking.id,
+    name: ranking.name,
+    linksCount: ranking.linksCount,
+    visitCount: ranking.visitCount,
+  };
 }
+
+//To findUserByEmail
+export async function findUserByEmail(email) {
+  const result = await db.query(`SELECT * FROM users WHERE email=$1`, [email]);
+  return result.rows[0];
+}
+
+
+//Functions:
 
 export async function signup(req, res) {
   const { name, email, password } = req.body;
 
   try {
-    const newEmailExistsInSignUpEmails = await db.query(
-      `SELECT * FROM users WHERE email=$1`,
-      [email]
-    );
-
-    if (newEmailExistsInSignUpEmails.rowCount > 0) {
-      return res
-        .status(409)
-        .send({ messsage: "Este email já existe no banco" });
+    const existingUser = await findUserByEmail(email);
+    if (existingUser) {
+      return res.status(409).send({ message: "Este email já existe no banco" });
     }
 
     const encryptedPassword = bcrypt.hashSync(password, 10);
@@ -52,14 +58,9 @@ export async function signin(req, res) {
   const { email, password } = req.body;
 
   try {
-    const userExist = await db.query(`SELECT * FROM users WHERE email=$1`, [
-      email,
-    ]);
-
-    if (userExist.rowCount === 0) {
-      return res
-        .status(401)
-        .send({ message: "Este email não existe, crie uma conta" });
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.status(401).send({ message: "Este email não existe, crie uma conta" });
     }
 
     const hashedPassword = userExist.rows[0].password;
@@ -87,8 +88,7 @@ export async function getUserMe(req, res) {
 
   try {
 
-    const result = await db.query(
-      `
+    const result = await db.query(`
     SELECT urls."userId", 
       users.name AS "name", 
       urls."id", 
@@ -122,7 +122,7 @@ export async function getUserMe(req, res) {
       id: result.rows[0].userId,
       name: result.rows[0].name,
       visitCount: totalVisitCount,
-      shortenedUrls: result.rows.map(mapRentalData),
+      shortenedUrls: result.rows.map(mapGetUserMe),
     });
   } catch (err) {
     return res.status(500).send(err.message);
@@ -130,7 +130,7 @@ export async function getUserMe(req, res) {
 }
 
 export async function getRanking(req, res) {
-  const ranking = await db.query(`SELECT 
+  const rankings = await db.query(`SELECT 
     users.id AS "id",
     users.name AS "name",
     COUNT(urls.id) AS "linksCount",
@@ -146,6 +146,6 @@ export async function getRanking(req, res) {
     LIMIT 10;
 `);
 
-  const formattedResults = formatResults(ranking.rows);
-  res.status(200).send(formattedResults);
+  const formattedRanking = rankings.rows.map(mapRanking);
+  res.status(200).send(formattedRanking);
 }
