@@ -65,13 +65,13 @@ export async function signin(req, res) {
       return res.status(401).send({ message: "Este email não existe, crie uma conta" });
     }
 
-    const hashedPassword = userExist.rows[0].password;
+    const hashedPassword = user.rows[0].password;
 
     if (bcrypt.compareSync(password, hashedPassword)) {
       const token = uuid();
 
       await db.query(`INSERT INTO sessions ("userId", token) VALUES ($1, $2)`, [
-        userExist.rows[0].id,
+        user.rows[0].id,
         token,
       ]);
 
