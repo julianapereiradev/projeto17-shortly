@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import {db} from "../database/database.connection.js"
+import { postUrlDB, showPostUrlDB } from "../repositories/urls.repositories.js";
 
 export async function postUrl(req, res) {
 
@@ -9,10 +10,10 @@ export async function postUrl(req, res) {
   try {
 
     const shortUrlResponse = nanoid()
-    
-    await db.query(`INSERT INTO urls ("userId", url, "shortUrl") VALUES ($1, $2, $3);`, [session.rows[0].userId, url, shortUrlResponse])
-    
-    const shortUrlExist = await db.query(`SELECT * FROM urls WHERE url=$1`, [url])
+
+    await postUrlDB(session.rows[0].userId, url, shortUrlResponse)
+
+    const shortUrlExist = await showPostUrlDB(url)
 
      res.status(201).send({
       id: shortUrlExist.rows[0].id,
