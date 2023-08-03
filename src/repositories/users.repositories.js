@@ -12,14 +12,6 @@ export async function signupDB(name, email, encryptedPassword) {
     );
 }
 
-
-export async function signinDB(userId, token) {
-    return await db.query(`INSERT INTO sessions ("userId", token) VALUES ($1, $2)`, 
-    [userId, token]
-    );
-}
-
-
 export async function getUserMeDB(token) {
 
    return await db.query(`
