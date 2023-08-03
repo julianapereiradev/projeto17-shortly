@@ -1,7 +1,7 @@
 import { db } from "../database/database.connection.js";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import { findUserByEmailDB, getRankingDB, getUserMeDB, signupDB } from "../repositories/users.repositories.js";
+import { findUserByEmailDB, getRankingDB, getUserMeDB, signinDB, signupDB } from "../repositories/users.repositories.js";
 
 
 //To render ROUTE /users/me
@@ -60,10 +60,7 @@ export async function signin(req, res) {
     if (bcrypt.compareSync(password, hashedPassword)) {
       const token = uuid();
 
-      await db.query(`INSERT INTO sessions ("userId", token) VALUES ($1, $2)`, [
-        user.rows[0].id,
-        token,
-      ]);
+      await signinDB(user.rows[0].id, token)
 
       res.status(200).send({ token: token });
     } else {
