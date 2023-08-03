@@ -9,5 +9,14 @@ export async function showPostUrlDB(url) {
 }
 
 export async function getUrlByIdDB(id) {
-    return await db.query(`SELECT urls.id, urls."shortUrl", urls.url FROM urls WHERE id=$1`, [id]);
+    return await db.query(`SELECT urls.id, urls."shortUrl", urls.url FROM urls WHERE id=$1`, [id])
+}
+
+export async function selectUrlByIdDB(id) {
+    return await db.query(`SELECT * FROM urls WHERE id=$1`, [id]);
+}
+
+export async function deleteUrlByIdDB(id) {   
+    return await db.query(`DELETE FROM urls WHERE id=$1`, [id]);
  }
+  

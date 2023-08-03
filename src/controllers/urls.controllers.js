@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import {db} from "../database/database.connection.js"
-import { getUrlByIdDB, postUrlDB, showPostUrlDB } from "../repositories/urls.repositories.js";
+import { selectUrlByIdDB, getUrlByIdDB, postUrlDB, showPostUrlDB, deleteUrlByIdDB } from "../repositories/urls.repositories.js";
 
 export async function postUrl(req, res) {
 
@@ -71,8 +71,7 @@ export async function deleteUrlById(req, res) {
   const session = res.locals;
 
   try {
-    
-    const idUrlQuery = await db.query(`SELECT * FROM urls WHERE id=$1`, [id]);
+    const idUrlQuery = await selectUrlByIdDB(id)
     if (idUrlQuery.rows.length === 0) {
       return res.status(404).send("Este id não existe no banco de urls");
     }
@@ -84,7 +83,7 @@ export async function deleteUrlById(req, res) {
       return res.status(401).send("Você não tem permissão para excluir esta URL.");
     }
     
-    await db.query(`DELETE FROM urls WHERE id=$1`, [id]);
+    await deleteUrlByIdDB(id)
     res.sendStatus(204);
 
   } catch (err) {
