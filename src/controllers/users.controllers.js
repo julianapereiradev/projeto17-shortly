@@ -98,8 +98,14 @@ export async function getUserMe(req, res) {
 }
 
 export async function getRanking(req, res) {
-  const rankings = await getRankingDB()
 
-  const formattedRanking = rankings.rows.map(mapRanking);
-  res.status(200).send(formattedRanking);
+  try {
+    const rankings = await getRankingDB()
+
+    const formattedRanking = rankings.rows.map(mapRanking);
+    res.status(200).send(formattedRanking);
+
+  } catch(err) {
+    return res.status(500).send(err.message);
+  }
 }
