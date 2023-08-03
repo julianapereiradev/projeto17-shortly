@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import {db} from "../database/database.connection.js"
-import { getUrlByIdDB, postUrlDB, showPostUrlDB } from "../repositories/urls.repositories.js";
+import { getUrlByIdDB, postUrlDB, redirectUrlDB, selectUrlExistDB, showPostUrlDB } from "../repositories/urls.repositories.js";
 
 export async function postUrl(req, res) {
 
@@ -46,18 +46,22 @@ export async function getUrlById(req, res) {
 export async function redirectUrl(req, res) {
   const { shortUrl } = req.params;
 
-  const shortUrlQuery = await db.query(`SELECT urls.id, urls."shortUrl", urls.url, urls."visitCount" FROM urls WHERE "shortUrl"=$1`, [shortUrl]);
+  try {
+    const shortUrlQuery = await selectUrlExistDB(shortUrl)
 
-  if (shortUrlQuery.rows.length === 0) {
-    return res.status(404).send("Esta url encurtada não existe no banco de urls");
-  }
+    if (shortUrlQuery.rows.length === 0) {
+      return res.status(404).send("Esta url encurtada não existe no banco de urls");
+    }
 
-  const currentVisitCount = shortUrlQuery.rows[0].visitCount;
-  const newVisitCount = currentVisitCount + 1;
+    const currentVisitCount = shortUrlQuery.rows[0].visitCount;
+    const newVisitCount = currentVisitCount + 1;
 
-  await db.query(`UPDATE urls SET "visitCount"=$1 WHERE "shortUrl"=$2`, [newVisitCount, shortUrl]);
+    await redirectUrlDB(newVisitCount, shortUrl)
 
-  res.redirect(shortUrlQuery.rows[0].url);
+    res.redirect(shortUrlQuery.rows[0].url);
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }  
 }
 
 
