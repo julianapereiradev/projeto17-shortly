@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import {db} from "../database/database.connection.js"
-import { postUrlDB, showPostUrlDB } from "../repositories/urls.repositories.js";
+import { getUrlByIdDB, postUrlDB, showPostUrlDB } from "../repositories/urls.repositories.js";
 
 export async function postUrl(req, res) {
 
@@ -29,7 +29,8 @@ export async function getUrlById(req, res) {
   const { id } = req.params;
 
   try {
-    const urlIdQuery = await db.query(`SELECT urls.id, urls."shortUrl", urls.url FROM urls WHERE id=$1`, [id]);
+
+    const urlIdQuery = await getUrlByIdDB(id)
 
     if (urlIdQuery.rows.length === 0) {
       return res.status(404).send("Este id não existe no banco de urls");
