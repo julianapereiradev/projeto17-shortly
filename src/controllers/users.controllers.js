@@ -71,31 +71,66 @@ export async function signin(req, res) {
   }
 }
 
-export async function getUserMe(req, res) {
+// export async function getUserMe(req, res) {
 
+//   const token = res.locals.rows[0].token;
+
+//   try {
+
+//     const result = await getUserMeDB(token)
+
+//     let totalSum = 0;
+//       for (let i = 0; i < result.rows.length; i++) {
+//         const totalVisits = parseInt(result.rows[i].totalVisitCount, 10) || 0;
+//         totalSum += totalVisits;
+//       }
+
+//     res.status(200).send({
+//       id: result.rows[0].userId,
+//       name: result.rows[0].name,
+//       visitCount:  totalSum,
+//       shortenedUrls: result.rows.map(mapGetUserMe),
+//     });
+
+//   } catch (err) {
+//     return res.status(500).send(err.message);
+//   }
+// }
+
+
+export async function getUserMe(req, res) {
   const token = res.locals.rows[0].token;
 
   try {
+    const result = await getUserMeDB(token);
 
-    const result = await getUserMeDB(token)
+    if (result.rows.length === 0) {
+      // Usuário não tem nenhuma URL registrada
+      return res.status(200).send({
+        id: null, // ou outro valor que represente que não há usuário
+        name: null, // ou outro valor que represente que não há usuário
+        visitCount: 0,
+        shortenedUrls: [],
+      });
+    }
 
     let totalSum = 0;
-      for (let i = 0; i < result.rows.length; i++) {
-        const totalVisits = parseInt(result.rows[i].totalVisitCount, 10) || 0;
-        totalSum += totalVisits;
-      }
+    for (let i = 0; i < result.rows.length; i++) {
+      const totalVisits = parseInt(result.rows[i].totalVisitCount, 10) || 0;
+      totalSum += totalVisits;
+    }
 
     res.status(200).send({
       id: result.rows[0].userId,
       name: result.rows[0].name,
-      visitCount:  totalSum,
+      visitCount: totalSum,
       shortenedUrls: result.rows.map(mapGetUserMe),
     });
-
   } catch (err) {
     return res.status(500).send(err.message);
   }
 }
+
 
 export async function getRanking(req, res) {
 
@@ -112,7 +147,6 @@ export async function getRanking(req, res) {
 
 export async function logout(req, res) {
   const token = res.locals.rows[0].token;
-  console.log('token aqui:', token)
 
   try {
     await db.query(`DELETE FROM sessions WHERE token =$1`, [token]);
