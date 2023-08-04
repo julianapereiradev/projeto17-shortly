@@ -105,7 +105,20 @@ export async function getRanking(req, res) {
     const formattedRanking = rankings.rows.map(mapRanking);
     res.status(200).send(formattedRanking);
 
-  } catch(err) {
+  } catch (err) {
     return res.status(500).send(err.message);
+  }
+}
+
+export async function logout(req, res) {
+  const token = res.locals.rows[0].token;
+  console.log('token aqui:', token)
+
+  try {
+    await db.query(`DELETE FROM sessions WHERE token =$1`, [token]);
+    res.status(204).send("Token removido!")
+
+  } catch (err) {
+    res.status(500).send(err.message)
   }
 }
