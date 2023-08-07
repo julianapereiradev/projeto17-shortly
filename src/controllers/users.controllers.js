@@ -27,9 +27,13 @@ function mapRanking(ranking) {
 //Functions:
 
 export async function signup(req, res) {
-  const { name, email, password } = req.body;
+  const { name, email, password, confirmPassword } = req.body;
 
   try {
+
+    if(password !== confirmPassword) {
+      return res.status(422).send("As senhas estão diferentes!")
+    }
 
     const existingUser = await findUserByEmailDB(email);
     if (existingUser.rowCount > 0) {
@@ -71,32 +75,6 @@ export async function signin(req, res) {
   }
 }
 
-// export async function getUserMe(req, res) {
-
-//   const token = res.locals.rows[0].token;
-
-//   try {
-
-//     const result = await getUserMeDB(token)
-
-//     let totalSum = 0;
-//       for (let i = 0; i < result.rows.length; i++) {
-//         const totalVisits = parseInt(result.rows[i].totalVisitCount, 10) || 0;
-//         totalSum += totalVisits;
-//       }
-
-//     res.status(200).send({
-//       id: result.rows[0].userId,
-//       name: result.rows[0].name,
-//       visitCount:  totalSum,
-//       shortenedUrls: result.rows.map(mapGetUserMe),
-//     });
-
-//   } catch (err) {
-//     return res.status(500).send(err.message);
-//   }
-// }
-
 
 export async function getUserMe(req, res) {
   const token = res.locals.rows[0].token;
@@ -107,8 +85,8 @@ export async function getUserMe(req, res) {
     if (result.rows.length === 0) {
       // Usuário não tem nenhuma URL registrada
       return res.status(200).send({
-        id: null, // ou outro valor que represente que não há usuário
-        name: null, // ou outro valor que represente que não há usuário
+        id: null,
+        name: null,
         visitCount: 0,
         shortenedUrls: [],
       });

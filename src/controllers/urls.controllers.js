@@ -9,6 +9,10 @@ export async function postUrl(req, res) {
 
   try {
 
+    if(url === "") {
+      return res.status(401).send("Envie alguma url para ser encurtada!")
+    }
+
     const shortUrlResponse = nanoid()
 
     await postUrlDB(session.rows[0].userId, url, shortUrlResponse)
@@ -33,7 +37,7 @@ export async function getUrlById(req, res) {
     const urlIdQuery = await getUrlByIdDB(id)
 
     if (urlIdQuery.rows.length === 0) {
-      return res.status(404).send("Este id não existe no banco de urls");
+      return res.status(404).send("Esta url encurtada não existe no banco de urls");
     }
 
     const formattedUrlId = urlIdQuery.rows[0];
@@ -73,7 +77,7 @@ export async function deleteUrlById(req, res) {
   try {
     const idUrlQuery = await selectUrlByIdDB(id)
     if (idUrlQuery.rows.length === 0) {
-      return res.status(404).send("Este id não existe no banco de urls");
+      return res.status(404).send("Este url Encurtada (id) não existe no banco de urls");
     }
     
     const userIdFromToken = session.rows[0].userId;
